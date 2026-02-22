@@ -1,0 +1,9 @@
+{
+  "name": "ChePower",
+  "render_readme": true,
+  "domains": ["chepower_integration"],
+  "homeassistant": "2026.1.0",
+  "codeowners": ["@AlexiusFrostys"],
+  "documentation": "https://github.com/AlexiusFrostys/ha-chepower-integration",
+  "issues": "https://github.com/AlexiusFrostys/ha-chepower-integration/issues"
+}

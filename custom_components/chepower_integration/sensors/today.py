@@ -1,0 +1,88 @@
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_time_change
+import json
+from datetime import datetime
+
+class ChePowerTodaySensor(Entity):
+    def __init__(self, logger, queue=None):
+        self._queue = queue
+        self._state = "Unknown"
+        self._attributes = {}
+        self._attr_should_poll = False # Disable auto polling
+        self._logger = logger
+
+    @property
+    def name(self): return "ChePower Today Sensor"
+
+    @property
+    def state(self): return self._state
+
+    @property
+    def extra_state_attributes(self): return self._attributes
+
+    async def async_added_to_hass(self):
+        async_track_time_change(
+            self.hass, 
+            self._update_at_time, 
+            hour=0, minute=0, second=1
+        )
+
+    async def _update_at_time(self, now):
+        await self.async_update()
+        self.async_write_ha_state() # Redraw card
+
+    async def async_update(self):
+        self._logger.info("QUEUE - %s", str(self._queue))
+        # date for request (format depends on API; adjust if needed)
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        # real fetch implementation (kept as a separate method for readability)
+        data = await self._fetch_schedule(date_str)
+        self._logger.info("Getting today schedule - done.")
+        self._logger.info("Today API response: %s", json.dumps(data) if data else "None")
+
+        # stubbed response kept for now
+        # data = json.loads('{"status":"ok","aData":[{"time_from":"00:00","time_to":"03:30","queue":1},{"time_from":"03:30","time_to":"04:00","queue":2},{"time_from":"04:00","time_to":"05:30","queue":3},{"time_from":"05:30","time_to":"06:00","queue":2},{"time_from":"06:00","time_to":"10:30","queue":1},{"time_from":"10:30","time_to":"11:00","queue":2},{"time_from":"11:00","time_to":"17:00","queue":3},{"time_from":"17:00","time_to":"17:30","queue":2},{"time_from":"17:30","time_to":"22:00","queue":1},{"time_from":"22:00","time_to":"22:30","queue":2},{"time_from":"22:30","time_to":"00:00","queue":3}],"aState":{"1":{"name":"Не відключається","color":"#63aa18"},"2":{"name":"Розмін черги/підчерги","color":"#AFAFAF"},"3":{"name":"Відключення","color":"#E33535"}}}');
+        # self._logger.info("Setting response json stub - done.")
+        
+        if data is None:
+            self._logger.warning("Failed to fetch schedule, data is None")
+            self._state = "error"
+            self._attributes = {"aData": None, "aState": None}
+        else:
+            self._state = data.get("status", "unknown")
+            self._attributes = data
+
+    async def _fetch_schedule(self, date_str: str):
+        """Fetch schedule from external API for the configured queue and date.
+
+        Returns parsed JSON on success or None on failure.
+        """
+        if not self._queue:
+            self._logger.debug("No queue selected, skipping remote fetch")
+            return None
+
+        url = "https://interruptions.energy.cn.ua/api/info_schedule_part"
+        payload = {"queue": self._queue, "curr_dt": date_str}
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "*/*",
+            "Accept-Language": "uk-UA,uk;q=0.9,en-US;q=0.8",
+            "Origin": "https://interruptions.energy.cn.ua",
+            "Referer": "https://interruptions.energy.cn.ua/interruptions",
+            "User-Agent": "Mozilla/5.0 (Custom HA Integration)"
+        }
+
+        session = async_get_clientsession(self.hass)
+        try:
+            async with session.post(url, json=payload, headers=headers, ssl=False, timeout=10) as resp:
+                if resp.status == 200:
+                    res = await resp.json()
+                    return res
+                else:
+                    self._logger.error("Error HTTP fetching schedule: %s", resp.status)
+        except Exception as e:
+            self._logger.error("Error fetching schedule: %s", e)
+
+        return None
