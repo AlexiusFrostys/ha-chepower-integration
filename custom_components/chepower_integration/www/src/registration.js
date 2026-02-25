@@ -6,5 +6,5 @@ export const registerCustomCard = () => {
     description: "Information about power outage",
     preview: true,
   });
-  console.info("%c CHEPOWER %c v1.0.0  - Loaded", "color: white; background: #03a9f4;", "color: #03a9f4;");
+  console.info("%c CHEPOWER %c v1.0.1  - Loaded", "color: white; background: #03a9f4;", "color: #03a9f4;");
 };

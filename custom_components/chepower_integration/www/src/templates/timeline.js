@@ -33,7 +33,7 @@ const TIMELINE_STYLES = `
     font-size: 19px;
     transition: all 0.3s ease;
     box-shadow: none;
-    z-index: 100;
+    z-index: 3;
     padding: 0;
   }
   .reload-button:hover:not(:disabled) {

@@ -16,7 +16,13 @@ export class ChePowerCard extends HTMLElement {
         {
           name: "entity",
           required: true,
-          selector: { entity: { domain: "sensor", integration: "chepower_integration" } }
+          selector: { 
+            entity: {
+               domain: "sensor",
+               integration: "chepower_integration", 
+               include_entities: ["sensor.chepower_today_sensor", "sensor.chepower_tomorrow_sensor"]
+              } 
+          }
         },
         {
           name: "header",

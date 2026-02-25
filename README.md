@@ -35,7 +35,7 @@ A Home Assistant custom integration that provides daily power-outage schedules f
 
 1. Go to **Settings** → **Devices & Services** → **Integrations**
 2. Search for "ChePower" and select the integration
-3. Select your **Queue** (1/1, 1/2, 2/1, 2/2, 3/1, 3/2)
+3. Select your **Queue**
 4. Complete the setup
 
 ## Configuration
@@ -45,7 +45,7 @@ The integration stores configuration in a config entry with the following struct
 ```yaml
 integration: chepower_integration
 data:
-  queue: "1/1"  # Your selected queue (1/1, 1/2, 2/1, 2/2, 3/1, 3/2)
+  queue: "1/1"  # Your selected queue
 ```
 
 ## Lovelace Card Configuration
@@ -214,15 +214,44 @@ The integration creates the following sensor entities:
 
 ### `sensor.chepower_today`
 - **Name**: ChePower Today Sensor
-- **State**: API response status ("ok" or error message)
+- **State**: State: Last data retrieval
 - **Attributes**:
   - `aData` (array): List of time intervals with power status
   - `aState` (object): Queue descriptions and colors
+  - `is_error` (bollean): Response state
 
 ### `sensor.chepower_tomorrow`
 - **Name**: ChePower Tomorrow Sensor
-- **State**: API response status
+- **State**: State: Last data retrieval
 - **Attributes**: Same structure as today's sensor
+
+### `sensor.chepower_time_to_outage`
+Time to next outage in format hh:mm.
+- **Name**: ChePower Time to Outage
+- **State**: Time to next outage(format hh:mm) or None if no more outage for today or tomorrow
+
+### `sensor.chepower_time_to_state_change`
+Time to next state change in format hh:mm.
+- **Name**: ChePower Time to next State Change
+- **State**: Time to next state change(format hh:mm) or None if no more state changes detected in today or tomorrow data
+
+### `sensor.chepower_current_state`
+State for current outage.
+- **Name**: ChePower Current State
+- **State**: Can be "On", "Off" or None
+
+### `sensor.chepower_next_state`
+State for next outage.
+- **Name**: ChePower Next State
+- **State**: Can be "On", "Off" or None
+
+### `sensor.chepower_currrent_stage_percent`
+Shows the current stage progress in percent.
+- **Name**: ChePower Current Stage Percent
+- **State**: integer value
+- **Attributes**:
+  - `current_queue_state`: Current state. Values: "On", "Off"
+  - `duration_seconds`: Duration of current satge in seconds
 
 ### Attribute Structure
 
@@ -406,8 +435,7 @@ automation:
 
 ### Getting Banned
 - **STOP** making frequent manual refresh requests immediately
-- Wait at least 24 hours before trying again
-- Contact Chernihiv Energy Company support for account recovery
+- Wait at least 48 hours before trying again
 - Consider using the automatic update feature instead
 
 ## Development
@@ -470,6 +498,14 @@ For issues, questions, or feature requests:
 3. Include Home Assistant logs if reporting bugs
 
 ## Changelog
+
+### v1.0.1 (New sensors)
+- ➕ Add sensor.chepower_current_state
+- ➕ Add sensor.chepower_next_state
+- ➕ Add sensor.chepower_time_to_outage
+- ➕ Add sensor.chepower_time_to_state_change
+- ➕ Add chepower_currrent_stage_percent
+- 🐞 Fix: Force reload data button position
 
 ### v1.0.0 (Initial Release)
 - ✅ Integration setup and config flow
